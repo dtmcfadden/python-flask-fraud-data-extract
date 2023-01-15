@@ -87,11 +87,11 @@ class Kaggle_D1_IpAddress_To_Country_Seeder(Seeder):
 class Kaggle_D1_Fraud_Data_Seeder(Seeder):
     def __init__(self, db=None):
         Seeder.__init__(self, db=db)
-        self.priority = 1
+        self.priority = 2
 
     @timer_func
     def run(self):
-        names = ['user_id', 'signup_time', 'purchase_time', 'purchase_value',
+        names = ['id', 'signup_time', 'purchase_time', 'purchase_value',
                  'device_id', 'source', 'browser', 'sex', 'age', 'ip_address', 'is_fraud']
         filepath = csv_loc + 'fraud_ecommerce/Fraud_Data.csv'
 
@@ -155,14 +155,16 @@ class Kaggle_D1_Fraud_Data_Seeder(Seeder):
                 row)
             df.loc[index, 'purchase_fingerprint'] = self.create_purchase_fingerprint(
                 row)
-            # to_insert.append(self.create_signup_purchase_diff_sec(index, row))
+            df.loc[index, 'user_fingerprint'] = self.create_user_fingerprint(
+                row)
+        # to_insert.append(self.create_signup_purchase_diff_sec(index, row))
         # self.insert_ip_country_from_ip_address(df)
         # print(f'to_insert: {to_insert_df}')
 
     def create_device_fingerprint(self, row):
         # print('create_device_fingerprint')
         # print(f'create_device_fingerprint row: {row}')
-        str2hash = row['device_id'] + row['source'] + row['browser']
+        str2hash = row['device_id'] + row['browser']
         # print(f'create_device_fingerprint str2hash: {str2hash}')
         fingerprint = hashlib.md5(str2hash.encode())
         fingerprint = fingerprint.hexdigest()
@@ -171,7 +173,14 @@ class Kaggle_D1_Fraud_Data_Seeder(Seeder):
 
     def create_purchase_fingerprint(self, row):
         # print('create_purchase_fingerprint')
-        str2hash = str(row['purchase_value']) + row['sex'] + str(row['age'])
+        str2hash = str(row['purchase_value']) + str(row['source'])
+        fingerprint = hashlib.md5(str2hash.encode())
+        fingerprint = fingerprint.hexdigest()
+        return fingerprint
+
+    def create_user_fingerprint(self, row):
+        # print('create_purchase_fingerprint')
+        str2hash = str(row['sex']) + str(row['age'])
         fingerprint = hashlib.md5(str2hash.encode())
         fingerprint = fingerprint.hexdigest()
         return fingerprint
@@ -210,9 +219,13 @@ class Kaggle_D1_Fraud_Data_Seeder(Seeder):
                 self.insert_device_fingerprint_velocity))
             executors_list.append(executor.submit(
                 self.insert_purchase_fingerprint_velocity))
+            executors_list.append(executor.submit(
+                self.insert_user_fingerprint_velocity))
 
         for x in executors_list:
+            # print('executors_list result1')
             x.result()
+            # print('executors_list result2')
             # print(x.result())
 
         # sql_fun = Sql_class()
@@ -221,10 +234,10 @@ class Kaggle_D1_Fraud_Data_Seeder(Seeder):
         #     row_start, file_fun.rows_to_get, file_fun.names, file_fun.filepath)
 
         # print(f'process_post_insert df: {df}')
-        # print(f'df["user_id"]: {df["user_id"]}')
-        # user_id_list = df["user_id"]
+        # print(f'df["id"]: {df["id"]}')
+        # id_list = df["id"]
 
-        # self.get_ip_address_hist_from_user_id(user_id_list)
+        # self.get_ip_address_hist_from_id(id_list)
 
     @timer_func
     def insert_signup_purchase_diff_sec(self):
@@ -233,11 +246,11 @@ class Kaggle_D1_Fraud_Data_Seeder(Seeder):
 
         sql_raw = '''
             INSERT INTO fraud_data_extract.kaggle_d1_meta
-            SELECT user_id, "signup_purchase_diff_sec" AS name, 
+            SELECT id, "signup_purchase_diff_sec" AS name,
             TIMESTAMPDIFF(SECOND, signup_time, purchase_time) AS value, NOW() AS created_at
             FROM fraud_data_extract.kaggle_d1_fraud_data
             '''
-        sql_fun.raw_sql_execute(sql_raw)
+        sql_fun.raw_sql_execute(sql_raw, returnValue=False)
         print('insert_signup_purchase_diff_sec2')
 
     @timer_func
@@ -247,15 +260,15 @@ class Kaggle_D1_Fraud_Data_Seeder(Seeder):
 
         sql_raw = '''
             INSERT INTO fraud_data_extract.kaggle_d1_meta
-            ((SELECT fd.user_id, 'ip_history_total' AS name, 
-            (SELECT COUNT(user_id) FROM fraud_data_extract.kaggle_d1_fraud_data fd_ip WHERE fd_ip.ip_address = fd.ip_address AND fd_ip.purchase_time < fd.purchase_time) AS value,
+            ((SELECT fd.id, 'ip_history_total' AS name,
+            (SELECT COUNT(id) FROM fraud_data_extract.kaggle_d1_fraud_data fd_ip WHERE fd_ip.ip_address = fd.ip_address AND fd_ip.purchase_time < fd.purchase_time) AS value,
             now() AS created_at FROM fraud_data_extract.kaggle_d1_fraud_data fd)
             UNION ALL
-            (SELECT fd.user_id, 'ip_history_fraudulent' AS name, 
-            (SELECT COUNT(user_id) FROM fraud_data_extract.kaggle_d1_fraud_data fd_ip WHERE fd_ip.ip_address = fd.ip_address AND fd_ip.purchase_time < fd.purchase_time AND fd_ip.is_fraud = 1) AS value,
+            (SELECT fd.id, 'ip_history_fraudulent' AS name,
+            (SELECT COUNT(id) FROM fraud_data_extract.kaggle_d1_fraud_data fd_ip WHERE fd_ip.ip_address = fd.ip_address AND fd_ip.purchase_time < fd.purchase_time AND fd_ip.is_fraud = 1) AS value,
             now() AS created_at FROM fraud_data_extract.kaggle_d1_fraud_data fd))
             '''
-        sql_fun.raw_sql_execute(sql_raw)
+        sql_fun.raw_sql_execute(sql_raw, returnValue=False)
         print('insert_ip_address_history2')
 
     @timer_func
@@ -265,12 +278,12 @@ class Kaggle_D1_Fraud_Data_Seeder(Seeder):
 
         sql_raw = '''
             INSERT INTO fraud_data_extract.kaggle_d1_meta
-            (SELECT fd.user_id, 'ip_address_velocity' AS name, 
-            (SELECT COUNT(user_id) FROM fraud_data_extract.kaggle_d1_fraud_data fd_ip 
+            (SELECT fd.id, 'ip_address_velocity' AS name,
+            (SELECT COUNT(id) FROM fraud_data_extract.kaggle_d1_fraud_data fd_ip
             WHERE fd_ip.ip_address = fd.ip_address AND fd_ip.purchase_time BETWEEN DATE_SUB(fd.purchase_time, INTERVAL 24 HOUR) AND fd.purchase_time) AS value,
             NOW() AS created_at FROM fraud_data_extract.kaggle_d1_fraud_data fd)
             '''
-        sql_fun.raw_sql_execute(sql_raw)
+        sql_fun.raw_sql_execute(sql_raw, returnValue=False)
         print('insert_ip_address_velocity2')
 
     @timer_func
@@ -280,12 +293,12 @@ class Kaggle_D1_Fraud_Data_Seeder(Seeder):
 
         sql_raw = '''
             INSERT INTO fraud_data_extract.kaggle_d1_meta
-            (SELECT fd.user_id, "device_fingerprint_velocity" AS name, 
+            (SELECT fd.id, "device_fingerprint_velocity" AS name,
             (SELECT COUNT(fd_df.device_id) FROM fraud_data_extract.kaggle_d1_fraud_data fd_df
             WHERE fd_df.device_fingerprint = fd.device_fingerprint AND fd_df.purchase_time BETWEEN DATE_SUB(fd.purchase_time, INTERVAL 24 HOUR) AND fd.purchase_time) AS value,
             NOW() AS created_at FROM fraud_data_extract.kaggle_d1_fraud_data fd)
             '''
-        sql_fun.raw_sql_execute(sql_raw)
+        sql_fun.raw_sql_execute(sql_raw, returnValue=False)
         print('insert_device_fingerprint_velocity2')
 
     @timer_func
@@ -295,13 +308,28 @@ class Kaggle_D1_Fraud_Data_Seeder(Seeder):
 
         sql_raw = '''
             INSERT INTO fraud_data_extract.kaggle_d1_meta
-            (SELECT fd.user_id, "purchase_fingerprint_velocity" AS name, 
+            (SELECT fd.id, "purchase_fingerprint_velocity" AS name,
             (SELECT COUNT(fd_df.purchase_fingerprint) FROM fraud_data_extract.kaggle_d1_fraud_data fd_df
             WHERE fd_df.purchase_time BETWEEN DATE_SUB(fd.purchase_time, INTERVAL 24 HOUR) AND fd.purchase_time AND fd_df.purchase_fingerprint = fd.purchase_fingerprint) AS value,
             NOW() AS created_at FROM fraud_data_extract.kaggle_d1_fraud_data fd)
             '''
-        sql_fun.raw_sql_execute(sql_raw)
+        sql_fun.raw_sql_execute(sql_raw, returnValue=False)
         print('insert_purchase_fingerprint_velocity2')
+
+    @timer_func
+    def insert_user_fingerprint_velocity(self):
+        print('insert_user_fingerprint_velocity1')
+        sql_fun = Sql_class()
+
+        sql_raw = '''
+            INSERT INTO fraud_data_extract.kaggle_d1_meta
+            (SELECT fd.id, "user_fingerprint_velocity" AS name,
+            (SELECT COUNT(fd_df.user_fingerprint) FROM fraud_data_extract.kaggle_d1_fraud_data fd_df
+            WHERE fd_df.purchase_time BETWEEN DATE_SUB(fd.purchase_time, INTERVAL 24 HOUR) AND fd.purchase_time AND fd_df.user_fingerprint = fd.user_fingerprint) AS value,
+            NOW() AS created_at FROM fraud_data_extract.kaggle_d1_fraud_data fd)
+            '''
+        sql_fun.raw_sql_execute(sql_raw, returnValue=False)
+        print('insert_user_fingerprint_velocity2')
 
 # Not to be used at the moment. Dataset was to large and I don't want to pay for storage
 # class Kaggle_D2_OnlineFraud_Seeder(Seeder, File_class, Sql_class):

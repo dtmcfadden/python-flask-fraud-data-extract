@@ -17,10 +17,10 @@ def bulk_insert_no_context(db_model, to_insert):
         # print(f'type(model): {type(model)}')
         # results = db.session.execute(model, to_insert)
         db.session.execute(model, to_insert)
-        db.session.commit()
+        # db.session.commit()
 
 
-def raw_sql_execute_no_conbtext(raw_sql, params):
+def raw_sql_execute_no_context(raw_sql, params):
     app = create_app()
     # app = app.create_app()
     with app.app_context():

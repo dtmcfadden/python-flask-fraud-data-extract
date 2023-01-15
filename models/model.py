@@ -4,25 +4,26 @@ from extensions.database import db
 class Kaggle_D1_Fraud_Data(db.Model):
     __tablename__ = 'kaggle_d1_fraud_data'
 
-    user_id = db.Column(db.Integer, primary_key=True, autoincrement=True)
+    id = db.Column(db.Integer, primary_key=True, autoincrement=True)
     signup_time = db.Column(db.DateTime, index=True)
     purchase_time = db.Column(db.DateTime, index=True)
-    purchase_value = db.Column(db.Float)
+    purchase_value = db.Column(db.Integer)
     device_id = db.Column(db.String(20), index=True)
     source = db.Column(db.String(6), index=True)
     browser = db.Column(db.String(10), index=True)
     sex = db.Column(db.String(1))
     age = db.Column(db.Integer, index=True)
-    ip_address = db.Column(db.Float, index=True)
+    ip_address = db.Column(db.BIGINT, index=True)
     device_fingerprint = db.Column(db.String(35), index=True)
     purchase_fingerprint = db.Column(db.String(35), index=True)
+    user_fingerprint = db.Column(db.String(35), index=True)
     is_fraud = db.Column(db.Boolean)
 
     kaggle_d1_meta = db.relationship(
         'Kaggle_D1_meta', backref='meta', cascade="all, delete-orphan")
 
     def __repr__(self):
-        return f"Id: {self.id}, user_id: {self.user_id}, Signup Time {self.signup_time}"
+        return f"Id: {self.id}, id: {self.id}, Signup Time {self.signup_time}"
 
 
 class Kaggle_D1_IpAddress_To_Country(db.Model):
@@ -39,14 +40,22 @@ class Kaggle_D1_IpAddress_To_Country(db.Model):
 class Kaggle_D1_meta(db.Model):
     __tablename__ = 'kaggle_d1_meta'
 
-    user_id = db.Column(db.Integer, db.ForeignKey(
-        'kaggle_d1_fraud_data.user_id'), primary_key=True, autoincrement=True)
+    id = db.Column(db.Integer, db.ForeignKey(
+        'kaggle_d1_fraud_data.id'), primary_key=True, autoincrement=True)
     name = db.Column(db.String(75), primary_key=True, default='0')
     value = db.Column(db.String(255), index=True)
     created_at = db.Column(db.DateTime, default=db.func.current_timestamp())
 
     def __repr__(self):
         return f"Id: {self.id}, Name: {self.name}, Value: {self.value}"
+
+
+class User_D1_Score(db.Model):
+    __tablename__ = 'user_d1_score'
+
+    user_id = db.Column(db.String(50), primary_key=True)
+    id = db.Column(db.Integer, primary_key=True)
+    result = db.Column(db.Boolean, index=True)
 
 
 # class Kaggle_D2_OnlineFraud(db.Model):
@@ -70,7 +79,7 @@ class Kaggle_D1_meta(db.Model):
 
 
 # Fraud_Data
-# "user_id","signup_time","purchase_time","purchase_value","device_id","source",
+# "id","signup_time","purchase_time","purchase_value","device_id","source",
 # "browser","sex","age","ip_address","class"
 
 # IpAddress_to_Country

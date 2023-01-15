@@ -10,4 +10,4 @@ this program is meant to be used as a service and only return data in JSON forma
 
 https://www.kaggle.com/datasets/vbinh002/fraud-ecommerce
 
-https://www.kaggle.com/datasets/jainilcoder/online-payment-fraud-detection
+<!-- https://www.kaggle.com/datasets/jainilcoder/online-payment-fraud-detection -->
