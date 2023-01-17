@@ -1,8 +1,8 @@
 """Initial migration
 
-Revision ID: 53386a9b81d0
+Revision ID: 219f0eff8662
 Revises: 
-Create Date: 2023-01-13 22:27:46.504682
+Create Date: 2023-01-17 15:54:56.953298
 
 """
 from alembic import op
@@ -10,7 +10,7 @@ import sqlalchemy as sa
 
 
 # revision identifiers, used by Alembic.
-revision = '53386a9b81d0'
+revision = '219f0eff8662'
 down_revision = None
 branch_labels = None
 depends_on = None
@@ -53,14 +53,14 @@ def upgrade():
     sa.Column('country', sa.String(length=50), nullable=True),
     sa.PrimaryKeyConstraint('lb_ip_address', 'ub_ip_address')
     )
-    op.create_table('user_d1_score',
+    op.create_table('user_d1_is_fraud',
     sa.Column('user_id', sa.String(length=50), nullable=False),
     sa.Column('id', sa.Integer(), nullable=False),
-    sa.Column('result', sa.Boolean(), nullable=True),
+    sa.Column('is_fraud', sa.Boolean(), nullable=True),
     sa.PrimaryKeyConstraint('user_id', 'id')
     )
-    with op.batch_alter_table('user_d1_score', schema=None) as batch_op:
-        batch_op.create_index(batch_op.f('ix_user_d1_score_result'), ['result'], unique=False)
+    with op.batch_alter_table('user_d1_is_fraud', schema=None) as batch_op:
+        batch_op.create_index(batch_op.f('ix_user_d1_is_fraud_is_fraud'), ['is_fraud'], unique=False)
 
     op.create_table('kaggle_d1_meta',
     sa.Column('id', sa.Integer(), autoincrement=True, nullable=False),
@@ -82,10 +82,10 @@ def downgrade():
         batch_op.drop_index(batch_op.f('ix_kaggle_d1_meta_value'))
 
     op.drop_table('kaggle_d1_meta')
-    with op.batch_alter_table('user_d1_score', schema=None) as batch_op:
-        batch_op.drop_index(batch_op.f('ix_user_d1_score_result'))
+    with op.batch_alter_table('user_d1_is_fraud', schema=None) as batch_op:
+        batch_op.drop_index(batch_op.f('ix_user_d1_is_fraud_is_fraud'))
 
-    op.drop_table('user_d1_score')
+    op.drop_table('user_d1_is_fraud')
     op.drop_table('kaggle_d1_ipaddress_to_country')
     with op.batch_alter_table('kaggle_d1_fraud_data', schema=None) as batch_op:
         batch_op.drop_index(batch_op.f('ix_kaggle_d1_fraud_data_user_fingerprint'))

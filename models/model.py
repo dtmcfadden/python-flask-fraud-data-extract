@@ -50,12 +50,12 @@ class Kaggle_D1_meta(db.Model):
         return f"Id: {self.id}, Name: {self.name}, Value: {self.value}"
 
 
-class User_D1_Score(db.Model):
-    __tablename__ = 'user_d1_score'
+class User_D1_Is_Fraud(db.Model):
+    __tablename__ = 'user_d1_is_fraud'
 
     user_id = db.Column(db.String(50), primary_key=True)
     id = db.Column(db.Integer, primary_key=True)
-    result = db.Column(db.Boolean, index=True)
+    is_fraud = db.Column(db.Boolean, index=True)
 
 
 # class Kaggle_D2_OnlineFraud(db.Model):

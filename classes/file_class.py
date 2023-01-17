@@ -26,8 +26,8 @@ class File_class():
         with open(file_location, newline=newline) as csvfile:
             spamreader = csv.reader(
                 csvfile, delimiter=delimiter, quotechar=quotechar)
-            for row in spamreader:
-                print(', '.join(row))
+            # for row in spamreader:
+            #     print(', '.join(row))
 
     # def run_csv_thread(self, process_csv, *args, **kwargs):
     #     print('run_csv_thread1a')
