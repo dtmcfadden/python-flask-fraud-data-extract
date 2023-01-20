@@ -11,7 +11,7 @@ def get_random_order_for_play(user_id):
     sql_params = {'cutoff': transaction_cutoff}
 
     if user_id == None:
-        sqk_raw = '''
+        sql_raw = '''
             SELECT r.id FROM (SELECT fd.id, uds.is_fraud
             FROM fraud_data_extract.kaggle_d1_fraud_data fd
             JOIN (SELECT CASE WHEN FLOOR(RAND()*10) > 5 THEN false ELSE true END AS is_fraud) r
