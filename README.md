@@ -6,7 +6,7 @@ extra attributes will be generated from the files
 
 this program is meant to be used as a service and only return data in JSON format
 
-# Two different datasets are being used to fill separate tables
+# Datasets are being used to fill separate tables
 
 https://www.kaggle.com/datasets/vbinh002/fraud-ecommerce
 
