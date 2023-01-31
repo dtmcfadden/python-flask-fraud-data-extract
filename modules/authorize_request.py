@@ -8,7 +8,7 @@ def receive_authorized_get_request(request):
     back the email from the header to the caller.
     """
     auth_header = request.headers.get("Authorization")
-    print('auth_header', auth_header)
+    # print('auth_header', auth_header)
     if auth_header:
 
         # split the auth type and value from the header.
