@@ -1,6 +1,6 @@
 # python-flask-fraud-data-extract
 
-Extract generated fraud data from csv files and store them in datase
+Extract generated fraud data from csv files and store them in database
 
 extra attributes will be generated from the files
 
